@@ -149,6 +149,7 @@ export async function POST(request) {
     }
 
     const data = await response.json()
+    console.log('Gemini raw response received for:', character_name)
     
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Invalid response from Gemini API')
@@ -205,6 +206,7 @@ export async function POST(request) {
       }
 
       const headcanons = responseData.headcanons.map(normalizeHeadcanon)
+      console.log('Normalized headcanon count:', headcanons.length)
       
       return NextResponse.json({
         success: true,
@@ -223,6 +225,8 @@ export async function POST(request) {
         tags: [],
         raw: { content: generatedText },
       }]
+
+      console.log('Fallback headcanon response generated for:', character_name)
       
       return NextResponse.json({
         success: true,

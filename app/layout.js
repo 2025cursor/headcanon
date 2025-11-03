@@ -30,10 +30,10 @@ export const metadata = {
 
 function TopNav() {
   const navItems = [
-    { href: '#top', label: 'Headcanon Generator' },
-    { href: '#use-cases', label: 'Use Cases' },
-    { href: '#faq', label: 'FAQ' },
-    { href: '#about', label: 'About' },
+    { href: '/', label: 'Headcanon Generator' },
+    { href: '/#use-cases', label: 'Use Cases' },
+    { href: '/#faq', label: 'FAQ' },
+    { href: '/about', label: 'About' },
   ]
 
   return (

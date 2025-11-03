@@ -128,7 +128,7 @@ const faqItems = [
   {
     question: 'Are the generated headcanons unique?',
     answer:
-      'Responses are generated on demand by Gemini. While similar requests can resemble one another, no templates are reused verbatim.',
+      'Each run blends your current selections with fresh phrasing. Save the results you like, then rerun with new focuses or details whenever you want additional variations.',
   },
 ]
 
@@ -264,7 +264,7 @@ export default function Home() {
   return (
     <main
       id="top"
-      className="flex min-h-screen w-full justify-center px-4 pb-6 pt-24 sm:px-6 lg:px-10 lg:pt-28"
+      className="flex min-h-screen w-full justify-center px-4 pb-6 pt-12 sm:px-6 lg:px-10 lg:pt-14"
     >
       <div className="flex w-full max-w-5xl flex-col gap-6 lg:gap-10">
         <section
@@ -305,7 +305,7 @@ export default function Home() {
                   htmlFor="length"
                   className="text-sm font-semibold text-slate-700"
                 >
-                  Length / 输出数量
+                  Length
                 </label>
                   <select
                     id="length"
@@ -320,7 +320,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="genre" className="text-sm font-semibold text-slate-700">
-                    Genre / 题材风格
+                    Genre
                   </label>
                   <select
                     id="genre"
@@ -342,7 +342,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-2 xs:col-span-1">
                   <label htmlFor="gender" className="text-sm font-semibold text-slate-700">
-                    Gender / 性别设定
+                    Gender
                   </label>
                   <select
                     id="gender"
@@ -486,17 +486,6 @@ export default function Home() {
                         ))}
                       </div>
                     )}
-                    <details className="group mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-700">
-                        View JSON
-                        <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600 group-open:rotate-45 group-open:bg-indigo-500 group-open:text-white">
-                          +
-                        </span>
-                      </summary>
-                      <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900/95 px-4 py-3 text-xs text-slate-100">
-                        {JSON.stringify(headcanon.raw ?? headcanon, null, 2)}
-                      </pre>
-                    </details>
                   </article>
                 )
               })}
