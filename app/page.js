@@ -201,6 +201,7 @@ export default function Home() {
   const [characterSummary, setCharacterSummary] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loadingTip, setLoadingTip] = useState('')
 
   const handleCharacterFocusChange = (focus) => {
     setCharacterFocus((prev) => {
@@ -215,7 +216,7 @@ export default function Home() {
     e.preventDefault()
 
     if (!characterName.trim()) {
-      setError('Please enter a character name')
+      setError('Please enter a character name.')
       return
     }
 
@@ -224,6 +225,13 @@ export default function Home() {
       return
     }
 
+    const tips = [
+      'Shaping backstory beats…',
+      'Polishing personality quirks…',
+      'Threading motivations into place…',
+      'Curating signature habits…',
+    ]
+    setLoadingTip(tips[Math.floor(Math.random() * tips.length)])
     setLoading(true)
     setError('')
     setHeadcanons([])
@@ -258,6 +266,7 @@ export default function Home() {
       console.error('Error:', err)
     } finally {
       setLoading(false)
+      setLoadingTip('')
     }
   }
 
@@ -293,10 +302,23 @@ export default function Home() {
                   type="text"
                   id="characterName"
                   value={characterName}
-                  onChange={(e) => setCharacterName(e.target.value)}
+                  onChange={(e) => {
+                    setCharacterName(e.target.value)
+                    if (error.includes('name')) {
+                      setError('')
+                    }
+                  }}
                   placeholder="e.g. Captain Liora, wandering archivist"
-                  className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-800 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className={[
+                    'w-full rounded-2xl border-2 bg-white px-4 py-3 text-base text-slate-800 shadow-sm transition focus:outline-none focus:ring-2',
+                    error.includes('name')
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
+                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-200',
+                  ].join(' ')}
                 />
+                {error.includes('name') && (
+                  <p className="text-xs font-semibold text-rose-500">Please enter a character name.</p>
+                )}
               </div>
 
               <div className="grid gap-3 xs:grid-cols-3">
@@ -415,7 +437,9 @@ export default function Home() {
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-500 sm:text-sm">
-                Tip: Combine several focus areas to blend personality, backstory, and visual detail.
+                {loading
+                  ? loadingTip || 'Generating headcanons…'
+                  : 'Tip: Combine several focus areas to blend personality, backstory, and visual detail.'}
               </p>
               <button
                 type="submit"
@@ -425,7 +449,7 @@ export default function Home() {
                 {loading ? (
                   <>
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Generating…
+                    Crafting headcanons…
                   </>
                 ) : (
                   'Generate'
@@ -439,13 +463,13 @@ export default function Home() {
           <section className="rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-lg sm:p-8 lg:p-10">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-slate-900">✨ 生成的角色设定</h3>
+                <h3 className="text-2xl font-bold text-slate-900">✨ Generated Headcanons</h3>
                 {characterSummary && (
                   <p className="mt-1 text-sm text-slate-600">{characterSummary}</p>
                 )}
               </div>
               <span className="inline-flex items-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2 text-sm font-semibold text-white shadow-sm">
-                共 {headcanons.length} 条设定
+                {headcanons.length} results
               </span>
             </div>
 

@@ -61,6 +61,38 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
 
 Now generate headcanons based on the provided inputs.`
 
+const normalizeHeadcanon = (item) => {
+  if (!item || typeof item !== 'object') {
+    return {
+      focus: 'General',
+      category: 'mixed',
+      content: typeof item === 'string' ? item : '',
+      tags: [],
+      raw: item,
+    }
+  }
+
+  const focusLabel =
+    typeof item.focus === 'string' && item.focus.trim().length > 0
+      ? item.focus.trim()
+      : 'General'
+
+  const category = focusLabel.toLowerCase().replace(/\s+/g, '_')
+  const tags = Array.isArray(item.tags)
+    ? item.tags
+        .filter(tag => typeof tag === 'string' && tag.trim().length > 0)
+        .map(tag => tag.trim())
+    : []
+
+  return {
+    focus: focusLabel,
+    category: category || 'mixed',
+    content: item.content || '',
+    tags,
+    raw: item,
+  }
+}
+
 export async function POST(request) {
   try {
     const body = await request.json()
@@ -174,37 +206,6 @@ export async function POST(request) {
         throw new Error('Invalid response structure')
       }
       
-      const normalizeHeadcanon = (item) => {
-        if (!item || typeof item !== 'object') {
-          return {
-            focus: 'General',
-            category: 'mixed',
-            content: typeof item === 'string' ? item : '',
-            tags: [],
-            raw: item,
-          }
-        }
-
-        const focusLabel = typeof item.focus === 'string' && item.focus.trim().length > 0
-          ? item.focus.trim()
-          : 'General'
-
-        const category = focusLabel.toLowerCase().replace(/\s+/g, '_')
-        const tags = Array.isArray(item.tags)
-          ? item.tags
-              .filter(tag => typeof tag === 'string' && tag.trim().length > 0)
-              .map(tag => tag.trim())
-          : []
-
-        return {
-          focus: focusLabel,
-          category: category || 'mixed',
-          content: item.content || '',
-          tags,
-          raw: item,
-        }
-      }
-
       const headcanons = responseData.headcanons.map(normalizeHeadcanon)
       console.log('Normalized headcanon count:', headcanons.length)
       
@@ -218,6 +219,34 @@ export async function POST(request) {
     } catch (parseError) {
       console.error('JSON parsing error:', parseError)
       // If JSON parsing fails, create a simple response
+      const cleaned = generatedText
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim()
+
+      const firstBrace = cleaned.indexOf('{')
+      const lastBrace = cleaned.lastIndexOf('}')
+
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const sliced = cleaned.slice(firstBrace, lastBrace + 1)
+        const sanitized = sliced.replace(/,\s*([}\]])/g, '$1')
+        try {
+          const recovered = JSON.parse(sanitized)
+          if (recovered.headcanons) {
+            const recoveredHeadcanons = recovered.headcanons.map(normalizeHeadcanon)
+            console.log('Recovered headcanons after sanitizing JSON:', recoveredHeadcanons.length)
+            return NextResponse.json({
+              success: true,
+              headcanons: recoveredHeadcanons,
+              character_name,
+              character_summary: recovered.character_summary,
+            })
+          }
+        } catch (recoveryError) {
+          console.error('Sanitized JSON parse error:', recoveryError)
+        }
+      }
+
       const headcanons = [{
         category: 'mixed',
         focus: 'General',
