@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Headcanon Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f3f1ff',
+                            100: '#ebe5ff',
+                            200: '#d9ceff',
+                            300: '#bea6ff',
+                            400: '#9f75ff',
+                            500: '#843dff',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.6s ease-out forwards;
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    Character Headcanon Generator
+                </h1>
+                <p class="text-lg text-gray-600">
+                    Use our AI-powered generator to create amazing character headcanons
+                </p>
+            </div>
+
+            <!-- Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
+                <form id="headcanonForm" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="characterName" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Character Name:
+                            </label>
+                            <input
+                                type="text"
+                                id="characterName"
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
+                                placeholder="Enter character name"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label for="length" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Length:
+                            </label>
+                            <select
+                                id="length"
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
+                            >
+                                <option value="short">Short (3)</option>
+                                <option value="medium" selected>Medium (5)</option>
+                                <option value="long">Long (8)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="customDescription" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Additional Details for Headcanon (optional):
+                        </label>
+                        <textarea
+                            id="customDescription"
+                            rows="4"
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors resize-none"
+                            placeholder="Add any specific details or context for the character..."
+                        ></textarea>
+                    </div>
+
+                    <div class="text-center">
+                        <button
+                            type="submit"
+                            id="generateBtn"
+                            class="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 transform hover:-translate-y-0.5 disabled:transform-none"
+                        >
+                            Generate
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 hidden">
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="space-y-4 hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Generated Headcanons:</h2>
+                <div id="headcanonsList"></div>
+            </div>
+
+            <!-- Demo Notice -->
+            <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mt-8">
+                <p class="font-semibold">Demo Version</p>
+                <p>This is a Next.js-style interface demonstration. To use the actual AI generation, you need to:</p>
+                <ul class="list-disc list-inside mt-2 space-y-1">
+                    <li>Install Node.js dependencies</li>
+                    <li>Configure your Google Gemini API key</li>
+                    <li>Run the Next.js development server</li>
+                </ul>
+                <p class="mt-2">For now, clicking "Generate" will show sample headcanons.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('headcanonForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const results = document.getElementById('results');
+        const headcanonsList = document.getElementById('headcanonsList');
+
+        // Sample headcanons for demo
+        const sampleHeadcanons = [
+            {
+                category: 'daily_life',
+                content: 'Every morning, they have a specific ritual of making tea in a particular order, and they get genuinely upset if this routine is disrupted.'
+            },
+            {
+                category: 'relationships',
+                content: 'They have a habit of remembering small details about people they care about, like their favorite snacks or the way they take their coffee.'
+            },
+            {
+                category: 'personality',
+                content: 'Despite appearing confident in public, they have a secret collection of comfort items they turn to when feeling overwhelmed.'
+            },
+            {
+                category: 'skills',
+                content: 'They are surprisingly good at fixing broken things, not because they studied it, but because they have an intuitive understanding of how things work.'
+            },
+            {
+                category: 'past',
+                content: 'There is a specific song that always makes them stop whatever they are doing and listen, because it reminds them of someone important from their past.'
+            }
+        ];
+
+        function getCategoryColor(category) {
+            const colors = {
+                'daily_life': 'bg-green-500',
+                'relationships': 'bg-red-500',
+                'past': 'bg-purple-500',
+                'skills': 'bg-orange-500',
+                'personality': 'bg-teal-500',
+                'mixed': 'bg-gray-500'
+            };
+            return colors[category] || 'bg-purple-500';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            results.classList.add('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        function displayHeadcanons(headcanons) {
+            headcanonsList.innerHTML = '';
+            
+            headcanons.forEach((headcanon, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500 animate-fade-in';
+                div.style.animationDelay = `${index * 0.1}s`;
+                
+                div.innerHTML = `
+                    <div class="inline-block px-3 py-1 rounded-full text-white text-xs font-semibold uppercase tracking-wide mb-3 ${getCategoryColor(headcanon.category)}">
+                        ${headcanon.category.replace('_', ' ')}
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">${headcanon.content}</p>
+                `;
+                
+                headcanonsList.appendChild(div);
+            });
+            
+            results.classList.remove('hidden');
+        }
+
+        // Gemini API调用函数
+        async function callGeminiAPI(characterName, customDescription, headcanonCount) {
+            const GEMINI_API_KEY = 'AIzaSyATXAD5GwfJBtGmHky0rlPcihd9svhnXKU';
+            const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+            
+            const prompt = `You are a creative writing assistant specializing in character development. Your task is to generate detailed, realistic, and engaging character headcanons that feel authentic and add depth to the character.
+
+Character Name: ${characterName}
+Additional Context: ${customDescription || 'No additional context provided'}
+Number of headcanons to generate: ${headcanonCount}
+
+Please generate ${headcanonCount} diverse headcanons for this character. Each headcanon should:
+1. Feel realistic and grounded in the character's world
+2. Add meaningful depth to the character
+3. Be specific and detailed rather than generic
+4. Cover different aspects of the character's life
+
+Categories to choose from:
+- daily_life: Everyday habits, routines, preferences
+- relationships: How they interact with others, relationship dynamics
+- past: Background, history, formative experiences
+- skills: Talents, abilities, things they're good/bad at
+- personality: Quirks, traits, emotional patterns
+- mixed: Combinations of the above categories
+
+Format your response as a JSON array where each headcanon is an object with:
+- "category": one of the categories above
+- "content": the detailed headcanon text
+
+Example format:
+[
+  {
+    "category": "daily_life",
+    "content": "Every morning, they have a specific ritual of making tea in a particular order, and they get genuinely upset if this routine is disrupted."
+  },
+  {
+    "category": "relationships",
+    "content": "They have a habit of remembering small details about people they care about, like their favorite snacks or the way they take their coffee."
+  }
+]
+
+Generate exactly ${headcanonCount} headcanons now:`;
+
+            const requestBody = {
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 2048,
+                }
+            };
+
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Invalid response format from Gemini API');
+            }
+
+            const generatedText = data.candidates[0].content.parts[0].text;
+            
+            // 尝试解析JSON响应
+            try {
+                const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error('No JSON array found in response');
+                }
+            } catch (parseError) {
+                console.error('JSON解析失败:', parseError);
+                throw new Error('Failed to parse API response');
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const characterName = document.getElementById('characterName').value.trim();
+            const customDescription = document.getElementById('customDescription').value.trim();
+            const length = document.getElementById('length').value;
+            
+            if (!characterName) {
+                showError('Please enter a character name');
+                return;
+            }
+            
+            hideError();
+            
+            // Show loading state
+            generateBtn.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Generating...
+                </div>
+            `;
+            generateBtn.disabled = true;
+            
+            try {
+                const lengthMap = {
+                    'short': 3,
+                    'medium': 5,
+                    'long': 8
+                };
+                
+                const count = lengthMap[length] || 5;
+                
+                // 真实的Gemini API调用
+                const response = await callGeminiAPI(characterName, customDescription, count);
+                displayHeadcanons(response);
+                
+            } catch (error) {
+                console.error('API调用失败:', error);
+                showError('Generation failed, showing sample data instead');
+                
+                // 如果API失败，显示示例数据
+                const lengthMap = {
+                    'short': 3,
+                    'medium': 5,
+                    'long': 8
+                };
+                
+                const count = lengthMap[length] || 5;
+                const selectedHeadcanons = sampleHeadcanons.slice(0, count);
+                
+                // Customize first headcanon with character name
+                if (selectedHeadcanons.length > 0) {
+                    selectedHeadcanons[0] = {
+                        ...selectedHeadcanons[0],
+                        content: `${characterName} has a specific morning ritual of making tea in a particular order, and gets genuinely upset if this routine is disrupted.`
+                    };
+                }
+                
+                displayHeadcanons(selectedHeadcanons);
+            } finally {
+                // Reset button
+                generateBtn.innerHTML = 'Generate';
+                generateBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
