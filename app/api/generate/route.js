@@ -61,12 +61,59 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
 
 Now generate headcanons based on the provided inputs.`
 
+const sanitizeContent = (text) => {
+  if (typeof text !== 'string') return ''
+
+  let cleaned = text.trim()
+  cleaned = cleaned.replace(/```json/gi, '').replace(/```/g, '').trim()
+
+  const startsWithJson = cleaned.startsWith('{') || cleaned.startsWith('[')
+  if (!startsWithJson) {
+    return cleaned
+  }
+
+  try {
+    const parsed = JSON.parse(cleaned)
+    if (Array.isArray(parsed)) {
+      const joined = parsed
+        .map((entry, index) => {
+          if (typeof entry === 'string') {
+            return `${index + 1}. ${entry}`
+          }
+          if (entry && typeof entry.content === 'string') {
+            return `${index + 1}. ${entry.content}`
+          }
+          return ''
+        })
+        .filter(Boolean)
+        .join('\n\n')
+      return joined || cleaned
+    }
+    if (parsed && Array.isArray(parsed.headcanons)) {
+      const joined = parsed.headcanons
+        .map((entry, index) => {
+          if (entry && typeof entry.content === 'string') {
+            return `${index + 1}. ${entry.content}`
+          }
+          return ''
+        })
+        .filter(Boolean)
+        .join('\n\n')
+      return joined || cleaned
+    }
+  } catch (err) {
+    console.error('Failed to sanitize JSON content:', err)
+  }
+
+  return cleaned || text
+}
+
 const normalizeHeadcanon = (item) => {
   if (!item || typeof item !== 'object') {
     return {
       focus: 'General',
       category: 'mixed',
-      content: typeof item === 'string' ? item : '',
+      content: typeof item === 'string' ? sanitizeContent(item) : '',
       tags: [],
       raw: item,
     }
@@ -87,7 +134,7 @@ const normalizeHeadcanon = (item) => {
   return {
     focus: focusLabel,
     category: category || 'mixed',
-    content: item.content || '',
+    content: sanitizeContent(item.content || ''),
     tags,
     raw: item,
   }
@@ -250,7 +297,7 @@ export async function POST(request) {
       const headcanons = [{
         category: 'mixed',
         focus: 'General',
-        content: generatedText,
+        content: sanitizeContent(generatedText),
         tags: [],
         raw: { content: generatedText },
       }]
