@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY_HERE'
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent'
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent'
 
 const PROMPT_TEMPLATE = `You are a creative character development expert specializing in generating believable and engaging headcanons.
 
@@ -152,8 +152,12 @@ export async function POST(request) {
       character_focus = ['personality'] 
     } = body
 
-    console.log('API Key available:', !!GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY_HERE')
-    console.log('Request body:', { character_name, custom_description, length, genre, gender, character_focus })
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: 'GEMINI_API_KEY is not configured' },
+        { status: 500 }
+      )
+    }
 
     if (!character_name?.trim()) {
       return NextResponse.json(
@@ -197,8 +201,6 @@ export async function POST(request) {
       .replace(/{CUSTOM_DETAILS}/g, custom_description || 'No additional context provided')
 
     // Call Gemini API
-    console.log('Making API call to:', `${GEMINI_API_URL}?key=${GEMINI_API_KEY.substring(0, 10)}...`)
-    
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
@@ -219,8 +221,6 @@ export async function POST(request) {
       })
     })
 
-    console.log('API Response status:', response.status)
-    
     if (!response.ok) {
       const errorText = await response.text()
       console.error('API Error response:', errorText)
@@ -228,7 +228,6 @@ export async function POST(request) {
     }
 
     const data = await response.json()
-    console.log('Gemini raw response received for:', character_name)
     
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Invalid response from Gemini API')
@@ -254,7 +253,6 @@ export async function POST(request) {
       }
       
       const headcanons = responseData.headcanons.map(normalizeHeadcanon)
-      console.log('Normalized headcanon count:', headcanons.length)
       
       return NextResponse.json({
         success: true,
@@ -281,7 +279,6 @@ export async function POST(request) {
           const recovered = JSON.parse(sanitized)
           if (recovered.headcanons) {
             const recoveredHeadcanons = recovered.headcanons.map(normalizeHeadcanon)
-            console.log('Recovered headcanons after sanitizing JSON:', recoveredHeadcanons.length)
             return NextResponse.json({
               success: true,
               headcanons: recoveredHeadcanons,
@@ -301,8 +298,6 @@ export async function POST(request) {
         tags: [],
         raw: { content: generatedText },
       }]
-
-      console.log('Fallback headcanon response generated for:', character_name)
       
       return NextResponse.json({
         success: true,

@@ -202,6 +202,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [loadingTip, setLoadingTip] = useState('')
+  const [copiedIndex, setCopiedIndex] = useState(null)
 
   const handleCharacterFocusChange = (focus) => {
     setCharacterFocus((prev) => {
@@ -212,6 +213,16 @@ export default function Home() {
     })
   }
 
+  const handleCopyHeadcanon = async (content, index) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopiedIndex(index)
+      setTimeout(() => setCopiedIndex(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+  
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -491,9 +502,26 @@ export default function Home() {
                         <span>{categoryInfo.icon}</span>
                         <span>{headcanon.focus || categoryInfo.name}</span>
                       </span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
-                        #{index + 1}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCopyHeadcanon(headcanon.content, index)}
+                          className="rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-slate-200 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          title="Copy headcanon"
+                        >
+                          {copiedIndex === index ? (
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                          #{index + 1}
+                        </span>
+                      </div>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-slate-700 sm:text-base">
                       {headcanon.content}
